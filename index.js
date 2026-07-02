@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { connect, getCandles } = require('./deriv');
+const { connect, getCandles, findSymbolsMatching } = require('./deriv');
 const { initTelegram, sendSignal, sendStatus } = require('./telegram');
 const { analyzeSymbol } = require('./strategies/engine');
 const { SYMBOLS, TIMEFRAMES, SCAN_INTERVAL_MS } = require('./config');
@@ -47,7 +47,16 @@ async function scanAll() {
 
 async function main() {
   initTelegram(TELEGRAM_TOKEN, TELEGRAM_CHAT_ID);
-  await connect();
+ await connect();
+
+  // One-time diagnostic: find the correct oil symbol code (remove this block once confirmed)
+  try {
+    const oilMatches = await findSymbolsMatching('oil');
+    console.log('[diagnostic] Oil-related symbols found:', oilMatches);
+  } catch (err) {
+    console.error('[diagnostic] Failed to fetch active symbols:', err.message);
+  }
+
   await sendStatus('🤖 Trading signal bot is live. Monitoring USDJPY, Gold, USOil...');
 
   await scanAll();
