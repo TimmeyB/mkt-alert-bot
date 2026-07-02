@@ -40,7 +40,12 @@ function getMarketStructure(candles) {
   }
   // bearish BOS: price breaks below last swing low in a downtrend context
   if (lowerHighs && lowerLows && price < lastLow.price) {
-    return { bias: 'ranging', lastBOS: null };
+    return { bias: 'bearish', lastBOS: lastLow };
+  }
+  if (higherHighs && higherLows) return { bias: 'bullish', lastBOS: null };
+  if (lowerHighs && lowerLows) return { bias: 'bearish', lastBOS: null };
+
+  return { bias: 'ranging', lastBOS: null };
 }
 
 module.exports = { getMarketStructure, findSwings };
