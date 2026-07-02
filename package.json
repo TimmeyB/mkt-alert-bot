@@ -1,14 +1,14 @@
 {
   "name": "mkt-alert-bot",
   "version": "1.0.0",
-  "description": "Telegram bot that watches forex/commodity pairs for FVG rejection setups and sends alerts.",
-  "main": "bot.js",
+  "description": "Telegram signal-alert bot for USDJPY, Gold, USOil using Breakout+Retest, FVG, and CRT strategies on Deriv price data.",
+  "main": "index.js",
   "scripts": {
-    "start": "node bot.js"
+    "start": "node index.js"
   },
   "dependencies": {
-    "telegraf": "^4.16.3",
-    "ws": "^8.18.0",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "node-telegram-bot-api": "^0.66.0",
+    "ws": "^8.18.0"
   }
 }
