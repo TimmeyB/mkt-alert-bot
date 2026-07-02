@@ -71,4 +71,17 @@ async function getCandles(symbol, granularity, count = CANDLE_COUNT) {
   }));
 }
 
-module.exports = { connect, getCandles };
+// Diagnostic helper: list all active symbols matching a keyword (e.g. "oil")
+async function findSymbolsMatching(keyword) {
+  const res = await send({ active_symbols: 'brief' });
+  const lower = keyword.toLowerCase();
+  return res.active_symbols
+    .filter(
+      (s) =>
+        s.symbol.toLowerCase().includes(lower) ||
+        s.display_name.toLowerCase().includes(lower)
+    )
+    .map((s) => `${s.symbol} — ${s.display_name}`);
+}
+
+module.exports = { connect, getCandles, findSymbolsMatching };
