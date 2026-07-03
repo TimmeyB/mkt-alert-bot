@@ -16,23 +16,24 @@ const lastAlerted = new Map();
 
 async function scanSymbol(label, symbol) {
   try {
-    const [h1, m15] = await Promise.all([
+    const [h4, h1, m15] = await Promise.all([
+      getCandles(symbol, TIMEFRAMES.H4),
       getCandles(symbol, TIMEFRAMES.H1),
       getCandles(symbol, TIMEFRAMES.M15),
     ]);
 
-    const signal = analyzeSymbol(h1, m15);
+    const signal = analyzeSymbol(h4, h1, m15);
     if (!signal) return;
 
     const currentEpoch = m15[m15.length - 1].epoch;
-    const key = `${symbol}`;
+    const key = symbol;
     if (lastAlerted.get(key) === currentEpoch) return;
 
     lastAlerted.set(key, currentEpoch);
-    console.log(`[signal] ${label}: ${signal.direction} @ ${signal.strength}%`);
+    console.log('[signal] ' + label + ': ' + signal.direction + ' @ ' + signal.strength + '%');
     await sendSignal(label, signal);
   } catch (err) {
-    console.error(`[scan] ${label} error:`, err.message);
+    console.error('[scan] ' + label + ' error:', err.message);
   }
 }
 
