@@ -3,7 +3,7 @@ module.exports = {
   SYMBOLS: {
     USDJPY: 'frxUSDJPY',
     GOLD: 'frxXAUUSD',
-    USOIL: 'frxXTIUSD',
+    // USOIL: dropped for now, symbol code TBD
   },
 
   // granularity in seconds: 900=15m, 3600=1h, 14400=4h
@@ -19,7 +19,7 @@ module.exports = {
   MIN_ALERT_STRENGTH: 50,
 
   // How often (ms) to re-scan the market for new setups
-  SCAN_INTERVAL_MS: 60 * 1000, // every 1 min (candles close on M15 anyway, bot just checks state)
+  SCAN_INTERVAL_MS: 60 * 1000, // every 1 min
 
   DERIV_WS_URL: 'wss://ws.derivws.com/websockets/v3?app_id=1089',
 };
