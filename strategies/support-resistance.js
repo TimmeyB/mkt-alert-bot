@@ -20,6 +20,25 @@ function findSRLevels(candles, tolerancePct = 0.05) {
   return levels;
 }
 
+function detectFreshBreakoutOnly(higherTFCandles, lowerTFCandles, minTouches) {
+  const mt = minTouches || 2;
+  const levels = findSRLevels(higherTFCandles).filter((l) => l.touches >= mt);
+  if (!levels.length || lowerTFCandles.length < 2) return null;
+
+  const last = lowerTFCandles[lowerTFCandles.length - 1];
+  const prev = lowerTFCandles[lowerTFCandles.length - 2];
+
+  for (const level of levels) {
+    if (level.type === 'resistance' && prev.close <= level.price && last.close > level.price) {
+      return { direction: 'bullish', level: level.price, originalRole: 'resistance', flippedRole: 'support', touches: level.touches };
+    }
+    if (level.type === 'support' && prev.close >= level.price && last.close < level.price) {
+      return { direction: 'bearish', level: level.price, originalRole: 'support', flippedRole: 'resistance', touches: level.touches };
+    }
+  }
+  return null;
+}
+
 function findBreakoutRetest(higherTFCandles, lowerTFCandles, options) {
   const opts = options || {};
   const retestTolerancePct = opts.retestTolerancePct || 0.05;
@@ -102,4 +121,4 @@ function findBreakoutRetest(higherTFCandles, lowerTFCandles, options) {
   return null;
 }
 
-module.exports = { findSRLevels, findBreakoutRetest };
+module.exports = { findSRLevels, findBreakoutRetest, detectFreshBreakoutOnly };
