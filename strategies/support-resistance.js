@@ -22,9 +22,11 @@ function findSRLevels(candles, tolerancePct = 0.05) {
 
 function findBreakoutRetest(higherTFCandles, lowerTFCandles, options) {
   const opts = options || {};
-  const retestTolerancePct = opts.retestTolerancePct || 0.1;
+  const retestTolerancePct = opts.retestTolerancePct || 0.05;
   const minTouches = opts.minTouches || 2;
   const lookbackCandles = opts.lookbackCandles || 40;
+  const minClosebufferPct = opts.minCloseBufferPct || 0.02;
+  const slBufferPct = opts.slBufferPct || 0.03;
 
   const allLevels = findSRLevels(higherTFCandles);
   const levels = allLevels.filter((l) => l.touches >= minTouches);
@@ -66,16 +68,31 @@ function findBreakoutRetest(higherTFCandles, lowerTFCandles, options) {
       continue;
     }
 
-    const nearLevel =
-      Math.abs(c.low - activeBreakout.level) / activeBreakout.level * 100 < retestTolerancePct ||
-      Math.abs(c.high - activeBreakout.level) / activeBreakout.level * 100 < retestTolerancePct;
+    const wickTouchedLevel =
+      activeBreakout.direction === 'bullish'
+        ? Math.abs(c.low - activeBreakout.level) / activeBreakout.level * 100 < retestTolerancePct
+        : Math.abs(c.high - activeBreakout.level) / activeBreakout.level * 100 < retestTolerancePct;
 
-    if (nearLevel) {
+    if (wickTouchedLevel) {
+      const closeBuffer = activeBreakout.level * (minClosebufferPct / 100);
       const held =
-        activeBreakout.direction === 'bullish' ? c.close > activeBreakout.level : c.close < activeBreakout.level;
+        activeBreakout.direction === 'bullish'
+          ? c.close > activeBreakout.level + closeBuffer
+          : c.close < activeBreakout.level - closeBuffer;
+
       if (held) {
-        return { ...activeBreakout, retestIndex: offset + i, fresh: offset + i === lowerTFCandles.length - 1 };
+        const slBuffer = activeBreakout.level * (slBufferPct / 100);
+        const sl =
+          activeBreakout.direction === 'bullish' ? c.low - slBuffer : c.high + slBuffer;
+
+        return {
+          ...activeBreakout,
+          retestIndex: offset + i,
+          fresh: offset + i === lowerTFCandles.length - 1,
+          sl: sl,
+        };
       }
+
       const reclaimed =
         activeBreakout.direction === 'bullish' ? c.close < activeBreakout.level : c.close > activeBreakout.level;
       if (reclaimed) activeBreakout = null;
