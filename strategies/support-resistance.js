@@ -20,14 +20,23 @@ function findSRLevels(candles, tolerancePct = 0.05) {
   return levels;
 }
 
-function findBreakoutRetest(higherTFCandles, lowerTFCandles, retestTolerancePct = 0.1) {
-  const levels = findSRLevels(higherTFCandles);
+function findBreakoutRetest(higherTFCandles, lowerTFCandles, options) {
+  const opts = options || {};
+  const retestTolerancePct = opts.retestTolerancePct || 0.1;
+  const minTouches = opts.minTouches || 2;
+  const lookbackCandles = opts.lookbackCandles || 40;
+
+  const allLevels = findSRLevels(higherTFCandles);
+  const levels = allLevels.filter((l) => l.touches >= minTouches);
   if (!levels.length) return null;
+
+  const recent = lowerTFCandles.slice(-lookbackCandles);
+  const offset = lowerTFCandles.length - recent.length;
 
   let activeBreakout = null;
 
-  for (let i = 1; i < lowerTFCandles.length; i++) {
-    const c = lowerTFCandles[i];
+  for (let i = 1; i < recent.length; i++) {
+    const c = recent[i];
 
     if (!activeBreakout) {
       for (const level of levels) {
@@ -37,7 +46,7 @@ function findBreakoutRetest(higherTFCandles, lowerTFCandles, retestTolerancePct 
             level: level.price,
             originalRole: 'resistance',
             flippedRole: 'support',
-            breakIndex: i,
+            breakIndex: offset + i,
             touches: level.touches,
           };
           break;
@@ -48,7 +57,7 @@ function findBreakoutRetest(higherTFCandles, lowerTFCandles, retestTolerancePct 
             level: level.price,
             originalRole: 'support',
             flippedRole: 'resistance',
-            breakIndex: i,
+            breakIndex: offset + i,
             touches: level.touches,
           };
           break;
@@ -65,7 +74,7 @@ function findBreakoutRetest(higherTFCandles, lowerTFCandles, retestTolerancePct 
       const held =
         activeBreakout.direction === 'bullish' ? c.close > activeBreakout.level : c.close < activeBreakout.level;
       if (held) {
-        return { ...activeBreakout, retestIndex: i, fresh: i === lowerTFCandles.length - 1 };
+        return { ...activeBreakout, retestIndex: offset + i, fresh: offset + i === lowerTFCandles.length - 1 };
       }
       const reclaimed =
         activeBreakout.direction === 'bullish' ? c.close < activeBreakout.level : c.close > activeBreakout.level;
