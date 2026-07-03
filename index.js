@@ -1,7 +1,7 @@
 require('dotenv').config();
 const { connect, getCandles } = require('./deriv');
-const { initTelegram, sendSignal, sendStatus } = require('./telegram');
-const { analyzeSymbol } = require('./strategies/engine');
+const { initTelegram, sendSignal, sendPendingBreakout, sendStatus } = require('./telegram');
+const { analyzeSymbol, checkPendingBreakout } = require('./strategies/engine');
 const { SYMBOLS, TIMEFRAMES, SCAN_INTERVAL_MS } = require('./config');
 
 const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
@@ -12,7 +12,8 @@ if (!TELEGRAM_TOKEN || !TELEGRAM_CHAT_ID) {
   process.exit(1);
 }
 
-const lastAlerted = new Map();
+const lastSignalAlerted = new Map();
+const lastBreakoutAlerted = new Map();
 
 async function scanSymbol(label, symbol) {
   try {
@@ -23,15 +24,25 @@ async function scanSymbol(label, symbol) {
     ]);
 
     const signal = analyzeSymbol(h4, h1, m15);
-    if (!signal) return;
+    if (signal) {
+      const currentEpoch = m15[m15.length - 1].epoch;
+      if (lastSignalAlerted.get(symbol) !== currentEpoch) {
+        lastSignalAlerted.set(symbol, currentEpoch);
+        console.log('[signal] ' + label + ': ' + signal.direction + ' @ ' + signal.strength + '% (R:R ' + signal.rr + ')');
+        await sendSignal(label, signal);
+      }
+      return;
+    }
 
-    const currentEpoch = m15[m15.length - 1].epoch;
-    const key = symbol;
-    if (lastAlerted.get(key) === currentEpoch) return;
-
-    lastAlerted.set(key, currentEpoch);
-    console.log('[signal] ' + label + ': ' + signal.direction + ' @ ' + signal.strength + '%');
-    await sendSignal(label, signal);
+    const pending = checkPendingBreakout(h1, m15);
+    if (pending) {
+      const key = pending.direction + ':' + pending.level.toFixed(3);
+      if (lastBreakoutAlerted.get(symbol) !== key) {
+        lastBreakoutAlerted.set(symbol, key);
+        console.log('[breakout] ' + label + ': ' + pending.direction + ' broke ' + pending.originalRole + ' at ' + pending.level.toFixed(3));
+        await sendPendingBreakout(label, pending);
+      }
+    }
   } catch (err) {
     console.error('[scan] ' + label + ' error:', err.message);
   }
