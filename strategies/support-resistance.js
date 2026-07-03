@@ -17,7 +17,23 @@ function findSRLevels(candles, tolerancePct = 0.05) {
       levels.push({ type, price: s.price, touches: 1, lastIndex: s.index });
     }
   }
-  return levels;
+
+  return removeChoppyLevels(levels);
+}
+
+function removeChoppyLevels(levels, minGapPct = 0.15) {
+  const bad = new Set();
+  for (let i = 0; i < levels.length; i++) {
+    for (let j = 0; j < levels.length; j++) {
+      if (i === j || levels[i].type === levels[j].type) continue;
+      const gapPct = Math.abs(levels[i].price - levels[j].price) / levels[i].price * 100;
+      if (gapPct < minGapPct) {
+        bad.add(i);
+        bad.add(j);
+      }
+    }
+  }
+  return levels.filter((_, idx) => !bad.has(idx));
 }
 
 function detectFreshBreakoutOnly(higherTFCandles, lowerTFCandles, minTouches) {
