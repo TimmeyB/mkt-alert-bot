@@ -19,14 +19,25 @@ async function sendSignal(symbolLabel, signal) {
 
   let msg = '';
   if (weak) {
-    msg += `⚠️⚠️ *LOW CONFIDENCE SETUP — GO CHECK MANUALLY* ⚠️⚠️\n\n`;
+    msg += '⚠️⚠️ *LOW CONFIDENCE SETUP — GO CHECK MANUALLY* ⚠️⚠️\n\n';
   }
-  msg += `*${symbolLabel}* — ${signal.strategy}\n`;
-  msg += `${dirEmoji}  |  Strength: *${signal.strength}%*\n\n`;
-  msg += `Entry: \`${fmt(signal.entry)}\`\n`;
-  msg += `SL: \`${fmt(signal.sl)}\`\n`;
-  msg += `TP: \`${fmt(signal.tp)}\`\n\n`;
-  msg += signal.notes.map((n) => `• ${n}`).join('\n');
+  msg += '*' + symbolLabel + '* — ' + signal.strategy + '\n';
+  msg += dirEmoji + '  |  Strength: *' + signal.strength + '%*  |  R:R ' + signal.rr + '\n\n';
+  msg += 'Entry: `' + fmt(signal.entry) + '`\n';
+  msg += 'SL: `' + fmt(signal.sl) + '`\n';
+  msg += 'TP: `' + fmt(signal.tp) + '`\n\n';
+  msg += signal.notes.map((n) => '• ' + n).join('\n');
+
+  await bot.sendMessage(chatId, msg, { parse_mode: 'Markdown' });
+}
+
+async function sendPendingBreakout(symbolLabel, breakout) {
+  const dirEmoji = breakout.direction === 'bullish' ? '🟢' : '🔴';
+  let msg = '';
+  msg += '👀 *' + symbolLabel + '* — Breakout detected\n';
+  msg += dirEmoji + ' Broke ' + breakout.originalRole + ' at `' + fmt(breakout.level) + '`';
+  msg += ' (' + breakout.touches + ' prior touches)\n';
+  msg += 'Now watching for a retest as ' + breakout.flippedRole + ' before entry...';
 
   await bot.sendMessage(chatId, msg, { parse_mode: 'Markdown' });
 }
@@ -36,4 +47,4 @@ async function sendStatus(text) {
   await bot.sendMessage(chatId, text);
 }
 
-module.exports = { initTelegram, sendSignal, sendStatus };
+module.exports = { initTelegram, sendSignal, sendPendingBreakout, sendStatus };
